@@ -1,9 +1,9 @@
 import sys
 import os
+sys.path.append(os.path.dirname(__file__))
+
 from dotenv import load_dotenv
 load_dotenv()
-
-sys.path.append(os.path.dirname(__file__))
 
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,6 +12,7 @@ from datetime import datetime
 
 from edi_parser import parse_edi_837, generate_sample_edi
 from denial_agent import analyze_claim
+from appeal_generator import generate_appeal
 from database import get_db, create_tables, ClaimRecord, AnalysisRecord, AuditLog
 
 app = FastAPI(
@@ -367,3 +368,66 @@ async def get_analytics(db: Session = Depends(get_db)):
             "estimated_revenue_protected": high_risk * 1500
         }
     }
+
+@app.post("/claims/{claim_id}/appeal")
+async def generate_appeal_letter(
+    claim_id: str,
+    db: Session = Depends(get_db)
+):
+    """Generate an appeal letter for a denied/high-risk claim"""
+    
+    claim = db.query(ClaimRecord).filter(
+        ClaimRecord.claim_id == claim_id
+    ).first()
+    
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    
+    analysis = db.query(AnalysisRecord).filter(
+        AnalysisRecord.claim_id == claim_id
+    ).order_by(AnalysisRecord.created_at.desc()).first()
+    
+    if not analysis:
+        raise HTTPException(status_code=404, detail="No analysis found for claim")
+    
+    appeal = generate_appeal(claim, analysis)
+    
+    log_action(db, "APPEAL_GENERATED", claim_id, {
+        "estimated_success_rate": appeal.get("estimated_success_rate"),
+        "urgency_level": appeal.get("urgency_level")
+    })
+    
+    return {
+        "success": True,
+        "appeal": appeal
+    }
+
+
+@app.get("/claims/{claim_id}/appeal/sample")
+async def generate_sample_appeal(
+    claim_id: str,
+    db: Session = Depends(get_db)
+):
+    """Generate sample appeal - same as POST but via GET for easy testing"""
+    claim = db.query(ClaimRecord).filter(
+        ClaimRecord.claim_id == claim_id
+    ).first()
+    
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+    
+    analysis = db.query(AnalysisRecord).filter(
+        AnalysisRecord.claim_id == claim_id
+    ).order_by(AnalysisRecord.created_at.desc()).first()
+    
+    if not analysis:
+        raise HTTPException(status_code=404, detail="No analysis found")
+    
+    appeal = generate_appeal(claim, analysis)
+    
+    log_action(db, "APPEAL_GENERATED", claim_id, {
+        "estimated_success_rate": appeal.get("estimated_success_rate"),
+        "urgency_level": appeal.get("urgency_level")
+    })
+    
+    return {"success": True, "appeal": appeal}

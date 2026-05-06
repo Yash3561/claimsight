@@ -51,7 +51,7 @@ function StatCard({ icon: Icon, label, value, sub, color }) {
   );
 }
 
-function ClaimCard({ claim, onOutcome }) {
+function ClaimCard({ claim, onOutcome, onAppeal }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -124,7 +124,7 @@ function ClaimCard({ claim, onOutcome }) {
 
       {expanded && (
         <div className="px-5 pb-5 border-t border-gray-100 pt-4">
-          <div className="flex gap-3 mt-2">
+          <div className="flex gap-3 mt-2 flex-wrap">
             {!claim.actual_outcome && (
               <>
                 <button
@@ -143,9 +143,109 @@ function ClaimCard({ claim, onOutcome }) {
                 </button>
               </>
             )}
+            <button
+              onClick={() => onAppeal(claim.claim_id)}
+              className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition-colors"
+            >
+              <FileText size={14} />
+              Generate Appeal
+            </button>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function AppealModal({ appeal, onClose }) {
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(appeal.letter);
+    alert("Appeal letter copied to clipboard!");
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl max-h-screen overflow-y-auto">
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                Appeal Letter Generated
+              </h2>
+              <p className="text-sm text-gray-500 mt-1">
+                Claim {appeal.claim_id}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                appeal.urgency_level === "URGENT"
+                  ? "bg-red-100 text-red-800"
+                  : appeal.urgency_level === "EXPEDITED"
+                  ? "bg-orange-100 text-orange-800"
+                  : "bg-blue-100 text-blue-800"
+              }`}>
+                {appeal.urgency_level}
+              </span>
+              <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                {appeal.estimated_success_rate}% Success Rate
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              Key Arguments
+            </h3>
+            <ul className="space-y-1">
+              {appeal.key_arguments?.map((arg, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                  <CheckCircle size={14} className="text-green-500 mt-0.5 flex-shrink-0" />
+                  {arg}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              Supporting Regulations
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              {appeal.supporting_codes?.map((code, i) => (
+                <span key={i} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded">
+                  {code}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">
+              Appeal Letter
+            </h3>
+            <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-700 whitespace-pre-line font-mono leading-relaxed max-h-64 overflow-y-auto">
+              {appeal.letter}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={copyToClipboard}
+              className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+            >
+              Copy Letter
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -284,6 +384,8 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [appealData, setAppealData] = useState(null);
+  const [appealLoading, setAppealLoading] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -314,6 +416,17 @@ export default function App() {
     } catch (e) {
       alert("Error recording outcome");
     }
+  };
+
+  const handleAppeal = async (claimId) => {
+    setAppealLoading(true);
+    try {
+      const res = await axios.get(`${API}/claims/${claimId}/appeal/sample`);
+      setAppealData(res.data.appeal);
+    } catch (e) {
+      alert("Error generating appeal: " + e.message);
+    }
+    setAppealLoading(false);
   };
 
   const handleSampleAnalysis = async () => {
@@ -523,6 +636,7 @@ export default function App() {
                       key={claim.claim_id}
                       claim={claim}
                       onOutcome={handleOutcome}
+                      onAppeal={handleAppeal}
                     />
                   ))}
                 </div>
@@ -556,6 +670,7 @@ export default function App() {
                   key={claim.claim_id}
                   claim={claim}
                   onOutcome={handleOutcome}
+                  onAppeal={handleAppeal}
                 />
               ))}
             </div>
@@ -614,6 +729,23 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {appealLoading && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-8 text-center">
+            <Activity size={32} className="mx-auto text-purple-600 animate-pulse mb-3" />
+            <p className="text-gray-700 font-medium">Generating Appeal Letter...</p>
+            <p className="text-gray-500 text-sm mt-1">AI is drafting your appeal</p>
+          </div>
+        </div>
+      )}
+
+      {appealData && (
+        <AppealModal
+          appeal={appealData}
+          onClose={() => setAppealData(null)}
+        />
+      )}
 
       {showUpload && (
         <UploadModal
