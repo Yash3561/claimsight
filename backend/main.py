@@ -431,3 +431,16 @@ async def generate_sample_appeal(
     })
     
     return {"success": True, "appeal": appeal}
+
+
+@app.post("/admin/seed")
+async def seed_db(db: Session = Depends(get_db)):
+    existing = db.query(ClaimRecord).count()
+    if existing > 5:
+        return {"message": f"Already has {existing} claims, skipping"}
+    import subprocess, sys
+    result = subprocess.run(
+        [sys.executable, "backend/seed_data.py"],
+        capture_output=True, text=True, cwd="/opt/render/project/src"
+    )
+    return {"message": "Done", "output": result.stdout[-2000:]}

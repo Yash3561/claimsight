@@ -178,10 +178,10 @@ function AppealModal({ appeal, onClose }) {
             </div>
             <div className="flex items-center gap-3">
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${appeal.urgency_level === "URGENT"
-                  ? "bg-red-100 text-red-800"
-                  : appeal.urgency_level === "EXPEDITED"
-                    ? "bg-orange-100 text-orange-800"
-                    : "bg-blue-100 text-blue-800"
+                ? "bg-red-100 text-red-800"
+                : appeal.urgency_level === "EXPEDITED"
+                  ? "bg-orange-100 text-orange-800"
+                  : "bg-blue-100 text-blue-800"
                 }`}>
                 {appeal.urgency_level}
               </span>
@@ -569,14 +569,14 @@ export default function App() {
                   Risk Distribution
                 </h3>
                 {pieData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart>
+                  <ResponsiveContainer width="100%" height={280}>
+                    <PieChart margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
                       <Pie
                         data={pieData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
+                        innerRadius={55}
+                        outerRadius={80}
                         dataKey="value"
                         label={({ name, value }) => `${name}: ${value}`}
                       >
