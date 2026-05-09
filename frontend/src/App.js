@@ -10,7 +10,7 @@ import {
   Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts";
 
-const API = "http://localhost:8000";
+const API = "https://claimsight.onrender.com";
 
 const getRiskColor = (score) => {
   if (score >= 80) return "text-red-500";
@@ -97,8 +97,8 @@ function ClaimCard({ claim, onOutcome, onAppeal }) {
             {claim.actual_outcome ? (
               <span
                 className={`text-xs px-3 py-1 rounded-full font-medium ${claim.actual_outcome === "APPROVED"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-red-100 text-red-800"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
                   }`}
               >
                 {claim.actual_outcome}
@@ -177,13 +177,12 @@ function AppealModal({ appeal, onClose }) {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                appeal.urgency_level === "URGENT"
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${appeal.urgency_level === "URGENT"
                   ? "bg-red-100 text-red-800"
                   : appeal.urgency_level === "EXPEDITED"
-                  ? "bg-orange-100 text-orange-800"
-                  : "bg-blue-100 text-blue-800"
-              }`}>
+                    ? "bg-orange-100 text-orange-800"
+                    : "bg-blue-100 text-blue-800"
+                }`}>
                 {appeal.urgency_level}
               </span>
               <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
@@ -319,8 +318,8 @@ function UploadModal({ onClose, onSuccess }) {
           <div>
             <div
               className={`text-center p-6 rounded-xl mb-4 ${result.analysis.risk_score >= 70
-                  ? "bg-red-50"
-                  : "bg-green-50"
+                ? "bg-red-50"
+                : "bg-green-50"
                 }`}
             >
               <div
@@ -513,8 +512,8 @@ export default function App() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`py-3 text-sm font-medium border-b-2 transition-colors capitalize ${activeTab === tab
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700"
                 }`}
             >
               {tab}
